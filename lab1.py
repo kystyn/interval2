@@ -33,7 +33,7 @@ def plotData(X, Y, legends, colors, xylabels, title, show=True):
         ax.plot(x, y, label=legend, color=color)
         ax.set_xlabel(xylabel[0])
         ax.set_ylabel(xylabel[1])
-    ax.legend()
+    ax.legend(prop={'size': 16})
     plt.title(title)
     if show:
         fig.show()
@@ -77,12 +77,6 @@ def makeIntervals(channelU, regression, a):
     X_inter_d[:,0] = X_inter[:,0] - a * ind
     X_inter_d[:,1] = X_inter[:,1] - a * ind
 
-    #for i in range(len(channelU)):
-    #    X_inter[i][0] = channelU[i] - err[i] - tolerance
-    #    X_inter[i][1] = channelU[i] + err[i] + tolerance
-    #    X_inter_d[i][0] = X_inter[i][0] - a * ind[i]
-    #    X_inter_d[i][1] = X_inter[i][1] - a * ind[i]
-
     return X_inter_d
 
 
@@ -121,22 +115,6 @@ def internalEstimateRJaccard(Rmin, Rmax, X1_inter_d, X2_inter_d):
     print('MAX Jaccard =', max(Jaccars))
     return R_interval, max(Jaccars), Jaccars, R_interval[np.argmax(Jaccars)]
 
-### Plot intervals after linear dependency subtraction and finding optimal R ---------------------------------------------
-#
-#Roptimal = 0.91504
-#
-#fig, ax = plt.subplots()
-## ax.plot(ind, Ch1_U, label="Channel 1 data", color="blue")
-#ax.errorbar(ind, data_d1, yerr=data_err1, label="Interval data X1\'", marker='none', linestyle='none', elinewidth=0.8, capsize=4, capthick=1)
-#ax.errorbar(ind, Roptimal * data_d2, yerr=data_err2, label="Interval data R*X2\'", marker='none', linestyle='none', elinewidth=0.8, capsize=4, capthick=1)
-## ax.errorbar(ind, Ch1_U, yerr=err1, label="Interval data", marker='none', linestyle='none', color="pink")
-#ax.set_xlabel('n')
-#ax.set_ylabel('X\'')
-#plt.xticks(np.arange(0, 201, 20))
-#ax.legend()
-## ax.grid()
-#plt.title("X1\' and R*X2\' intervals")
-#fig.show()
 
 def main():
     plt.rcParams['text.usetex'] = True
@@ -173,20 +151,35 @@ def main():
     fig, ax = plotData((R_int,), 
                         (Jaccard,), ('Jaccard index',), (None,),
                         (('$R_{21}$', 'Jaccard index'),), 'Jaccard index', show=False)
-    ax.scatter(extRmin, calcaulateJaccard(extRmin, X1, X2), color='red', label=f'$R_{{min}}={extRmin}$')
-    ax.scatter(extRmax, calcaulateJaccard(extRmax, X1, X2), color='red', label=f'$R_{{max}}={extRmax}$')
-    ax.scatter(Ropt, JaccardOpt, color='red', label=f'$R_{{opt}}={Ropt}$')
-    ax.legend()
+
+    xl = -20000
+    xr = 20000
+    yyr = 0
+    prevj = -1
+    for x, y in zip(R_int, Jaccard):
+        if y * prevj < 0:
+            if xl == -20000:
+                xl = x
+                yl = y
+            else:
+                xr = x
+                yr = y
+    ax.scatter(extRmin, calcaulateJaccard(extRmin, X1, X2), color='red', label=f'$R_{{min}}={extRmin:.3f}$')
+    ax.scatter(extRmax, calcaulateJaccard(extRmax, X1, X2), color='red', label=f'$R_{{max}}={extRmax:.3f}$')
+    ax.scatter(Ropt, JaccardOpt, color='red', label=f'$R_{{opt}}={Ropt:.3f}$')
+    ax.plot([xl, xl], [-0.9, yl], 'r--')
+    ax.plot([xr, xr], [-0.9, yr], 'r--')
+    ax.plot([xl, xr], [0, 0], 'r--')
+    ax.legend(prop={'size': 16})
     fig.show()
 
     fig, ax = plt.subplots()
     ax.errorbar(num, (X1[:,0] + X1[:,1]) / 2, yerr=x1err, color='red', label='Channel 1 without drift')
     ax.errorbar(num, Ropt * (X2[:,0] + X2[:,1]) / 2, yerr=x2err, color='green', label='Channel 2 without drift')
-    ax.legend()
+    ax.legend(prop={'size': 16})
     plt.title('Combined data')
     fig.show()
     print()
-    
 
 
 if __name__ == '__main__':
