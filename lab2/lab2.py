@@ -42,14 +42,14 @@ def plotData(X, Y, legends, colors, xylabels, title, show=True):
     return fig, ax
 
 
-def makeIntervals(channelU, weights, beta0, beta1):
+def makeIntervals(channelU, weights, beta0, beta1, rng):
     # multiplier to extern interval for regression capture
     tolerance = np.empty(shape=(len(channelU),), dtype=float)
     tolerance.fill(1e-4)
 
     tolerance = tolerance * weights
     err = np.abs(channelU - beta0)
-    ind = np.arange(0, numValues)
+    ind = np.arange(*rng)
     
     X = np.empty(shape=(len(channelU), 2), dtype='float')
     X[:, 0] = channelU - err - tolerance - beta1 * ind
@@ -96,17 +96,51 @@ def ir_outer(U):
     return res
 
 
-def main():
-    plt.rcParams['text.usetex'] = True
+def makePartialInterval():
     U1, U2 = readDataFromFile()
 
     #ir_outer(U1)
 
-    w1 = np.loadtxt('w1.mat')[:200]
-    X1 = makeIntervals(U1, w1, 0.012280, 1.0403e-5)
+    X1_1 = makeIntervals(U1[0:50],    6.54538, 0.012174, 2.0065e-5, (0, 50) ) ##
+    X1_2 = makeIntervals(U1[50:150],  1,       0.012699, 7.4948e-6, (50, 150))
+    X1_3 = makeIntervals(U1[150:200], 1.6666,  0.011491, 1.4171e-5, (150, 200))
 
-    w2 = np.loadtxt('w2.mat')[:200]
-    X2 = makeIntervals(U2, w2, 0.014142, 9.3126e-6)
+    X1 = np.concatenate((X1_1, X1_2, X1_3))
+
+    
+    X2_1 = makeIntervals(U2[0:50],    2.31319, 0.01420, 1.3681e-5, (0, 50)) 
+    X2_2 = makeIntervals(U2[50:150],  1,       0.01431, 8.1099e-6, (50, 150)) 
+    X2_3 = makeIntervals(U2[150:200], 1,       0.01318, 1.4310e-5, (150, 200)) 
+
+    X2 = np.concatenate((X2_1, X2_2, X2_3))
+
+    return X1, X2, (X1_1, X1_2, X1_3), (X2_1, X2_2, X2_3)
+
+
+def main():
+    plt.rcParams['text.usetex'] = True
+    
+    X1, X2, _, _ = makePartialInterval()
+
+    num = np.arange(0, numValues)
+    x1err = X1[:, 1] - X1[:, 0]
+    x2err = X2[:, 1] - X2[:, 0]
+    U1, U2 = readDataFromFile()
+    fig, ax = plt.subplots()
+    ax.errorbar(num, U1, yerr=x1err, color='red', label='First channel')
+    ax.set_xlabel('N')
+    ax.set_ylabel('U, mV')
+    ax.legend(prop={'size': 16})
+    plt.title('Model 1')
+    fig.show()
+
+    fig, ax = plt.subplots()
+    ax.errorbar(num, U2, yerr=x2err, color='green', label ='Second channel')
+    ax.set_xlabel('N')
+    ax.set_ylabel('U, mV')
+    ax.legend(prop={'size': 16})
+    plt.title('Model 2')
+    fig.show()
 
 
     R_int, JaccardOpt, Jaccard, Ropt = internalEstimateRJaccard(0.7, 1.0, X1, X2)

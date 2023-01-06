@@ -78,7 +78,7 @@ endif
 
 ## Build matrix and right-hand side vector of linear programming problem
 A = [X; -X; C];
-b = [y+ 1 * epsilon; -y+ 1 * epsilon; d]; %%KYSTYN -y+epsilon
+b = [y+ 1.5 * epsilon; -y+ 1.5 * epsilon; d]; %%KYSTYN -y+epsilon
 [n m] = size(X);
 
 ctype(1:2*n) = 'U'; # constraints type is inequality

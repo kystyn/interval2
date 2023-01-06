@@ -51,7 +51,7 @@ endif
  
 ## Prepare inequalities defining feasible parameters set polytope
 A = [X; -X];
-b = [y + 1 * epsilon; -y+ 1 * epsilon];
+b = [y + 1.5 * epsilon; -y+ 1.5 * epsilon];
  
 Lidx = (ctype == 'L');
 A = [ A; -C(Lidx,:) ]; 
