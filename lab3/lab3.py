@@ -1,11 +1,12 @@
 from csv import DictReader, reader
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from scipy.optimize import linprog
 from draw_data_status import\
-     draw_data_status_template, get_residual, get_leverage,\
-     add_point
+     draw_data_status_template, get_rad, get_residual, get_leverage,\
+     add_point, get_mid
 
 
 numValues = 200
@@ -133,27 +134,90 @@ def statuses(num, radius, X):
     fig.show()
 
 
+def disp_diagram(num, U, X):
+    yp_center = np.loadtxt(f'yp_center_{num}.mat')
+
+    fig, ax  = plt.subplots()
+
+    p = Polygon(
+        [(x, y[1]) for x, y in enumerate(yp_center)] +
+        [(numValues - 1 - x, y[0]) for x, y in enumerate(yp_center[::-1])],
+        facecolor='m')
+    ax.add_patch(p)
+    
+    err = np.asarray([2e-4] * numValues)
+    ax.errorbar(np.arange(0, numValues), U, yerr=err, color='red',
+                label=('First' if num == 1 else 'Second') + ' channel')
+
+    first = True
+    for x, y in enumerate(X):
+        l = get_leverage(x, y, yp_center)
+        r = get_residual(x, y, yp_center)
+
+        if abs(r) > 1 + l:
+            ax.errorbar(x - 7, U[x - 7], yerr=2e-4, color='b', label='Outlier' if first else None)
+            first = False
+            
+    ax.legend()
+    ax.set_title('Dispersion diagram')
+    ax.set_xlabel('N')
+    ax.set_ylabel('mV')
+    fig.show()
+
+'''
+def disp_diagram(num, X):
+    yp_center = np.loadtxt(f'yp_center_{num}.mat')
+
+    fig, ax  = plt.subplots()
+
+    p = Polygon(
+        [(x, y[1]) for x, y in enumerate(yp_center)] +
+        [(numValues - 1 - x, y[0]) for x, y in enumerate(yp_center[::-1])],
+        facecolor='m')
+    ax.add_patch(p)
+    
+    err = np.asarray([2e-4] * numValues)
+    ax.errorbar(np.arange(0, numValues), (X[:,0] + X[:,1]) / 2, yerr=err, color='red',
+                label=('First' if num == 1 else 'Second') + ' channel')
+
+    first = True
+    for x, y in enumerate(X):
+        l = get_leverage(x, y, yp_center)
+        r = get_residual(x, y, yp_center)
+
+        if abs(r) > 1 + l:
+            ax.errorbar(x, get_mid(y), yerr=2 *, color='b', label='Outlier' if first else None)
+            first = False
+            
+    ax.legend()
+    fig.show()
+'''
+
+
 def main():
     plt.rcParams['text.usetex'] = True
     
     U1, U2 = readDataFromFile()
+    U1[-1] -= 0.0001
+    U1[-2] -= 0.00012
 
     X1 = makeIntervals(U1, 1, 0.0126997, 7.494845e-6, (0, 200))
-    statuses(1, 1, X1)
-    X1 = makeIntervals(U1, 3, 0.0126997, 7.494845e-6, (0, 200))
-    statuses(1, 3, X1)
-    X1 = makeIntervals(U1, 5, 0.0126997, 7.494845e-6, (0, 200))
-    statuses(1, 5, X1)
-    X1 = makeIntervals(U1, 6, 0.0126997, 7.494845e-6, (0, 200))
-    statuses(1, 6, X1)
-    X2 = makeIntervals(U2, 1, 0.014314, 8.1099e-06, (0, 200))
-    statuses(2, 1, X2)
-    X2 = makeIntervals(U2, 3, 0.014314, 8.1099e-06, (0, 200))
-    statuses(2, 3, X2)
-    X2 = makeIntervals(U2, 5, 0.014314, 8.1099e-06, (0, 200))
-    statuses(2, 5, X2)
-    X2 = makeIntervals(U2, 6, 0.014314, 8.1099e-06, (0, 200))
-    statuses(2, 6, X2)
+    disp_diagram(1, U1, X1)
+    #statuses(1, 1, X1)
+    #X1 = makeIntervals(U1, 3, 0.0126997, 7.494845e-6, (0, 200))
+    #statuses(1, 3, X1)
+    #X1 = makeIntervals(U1, 5, 0.0126997, 7.494845e-6, (0, 200))
+    #statuses(1, 5, X1)
+    #X1 = makeIntervals(U1, 6, 0.0126997, 7.494845e-6, (0, 200))
+    #statuses(1, 6, X1)
+    #X2 = makeIntervals(U2, 1, 0.014314, 8.1099e-06, (0, 200))
+    #statuses(2, 1, X2)
+    #X2 = makeIntervals(U2, 3, 0.014314, 8.1099e-06, (0, 200))
+    #statuses(2, 3, X2)
+    #X2 = makeIntervals(U2, 5, 0.014314, 8.1099e-06, (0, 200))
+    #statuses(2, 5, X2)
+    #X2 = makeIntervals(U2, 6, 0.014314, 8.1099e-06, (0, 200))
+    #statuses(2, 6, X2)
     
     print()
 

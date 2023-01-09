@@ -61,7 +61,7 @@ function irp_temp = interval_problem(x, y)
   m1 = length(w)
 	scale = max(w(1:m));
 	for i = 1:m
-		eps(i) = eps(i) * scale; %KYSTYN scale
+		eps(i) = eps(i) * 1; %KYSTYN scale
 	end
 
 	X = [ x.^0 x ];
